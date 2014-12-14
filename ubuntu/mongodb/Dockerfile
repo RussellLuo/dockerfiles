@@ -4,14 +4,14 @@
 FROM phusion/baseimage:latest
 MAINTAINER RussellLuo <luopeng.he@gmail.com>
 
-# Update apt-get sources AND install MongoDB
-RUN apt-get update && apt-get -y install mongodb-server
+# Update apt-get sources AND install MongoDB/supervisor
+RUN apt-get update && apt-get -y install mongodb-server supervisor
 
-# Create the MongoDB data directory
-RUN mkdir -p /data/db
+# Copy config files
+ADD	./supervisord.conf /etc/supervisor/conf.d/
+ADD	./init-replicaset.conf /etc/supervisor/conf.d/
+ADD	./mongodb.conf /etc/
+ADD	./bootstrap.sh /tmp/
 
-# Expose port #27017 from the container to the host
-EXPOSE 27017
-
-# Set /usr/bin/mongod as the dockerized entry-point application
-ENTRYPOINT ["/usr/bin/mongod"]
+# Set /tmp/bootstrap.sh as the dockerized entry-point application
+ENTRYPOINT ["/bin/bash", "/tmp/bootstrap.sh"]
