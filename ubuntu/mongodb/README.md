@@ -14,3 +14,7 @@ To start a replica set with only one node:
 To start a replica set with three nodes:
 
     $ sudo docker run --name mongodb-dev -d -e REPLSETMEMBERS=3 -p :27017 -p :27018 -p 27019 mongodb:dev
+
+To start a replica set with authentication (one node):
+
+    $ sudo docker run --name mongodb-dev -e AUTH=true -e USERNAME=root -e PASSWORD=root -d -p :27017 mongodb:dev

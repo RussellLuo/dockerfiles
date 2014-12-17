@@ -9,7 +9,7 @@ RUN apt-get update && apt-get -y install mongodb-server supervisor
 
 # Copy config files
 ADD	./supervisord.conf /etc/supervisor/conf.d/
-ADD	./init-replicaset.conf /etc/supervisor/conf.d/
+ADD	./init_mongo.conf /etc/supervisor/conf.d/
 ADD	./mongodb.conf /etc/
 ADD	./bootstrap.sh /tmp/
 
