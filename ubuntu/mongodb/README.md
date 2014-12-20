@@ -9,12 +9,12 @@ Usage
 
 To start a replica set with only one node:
 
-    $ sudo docker run --name mongodb-dev -d -p :27017 mongodb:dev
+    $ sudo docker run --name mongodb-dev -p :27017 -d mongodb:dev
 
-To start a replica set with three nodes:
+To start a replica set (named `test_rs`) with three nodes:
 
-    $ sudo docker run --name mongodb-dev -d -e REPLSETMEMBERS=3 -p :27017 -p :27018 -p 27019 mongodb:dev
+    $ sudo docker run --name mongodb-dev -e REPLSETNAME=test_rs -e REPLSETMEMBERS=3 -p :27017 -p :27018 -p 27019 -d mongodb:dev
 
 To start a replica set with authentication (one node):
 
-    $ sudo docker run --name mongodb-dev -e AUTH=true -e USERNAME=root -e PASSWORD=root -d -p :27017 mongodb:dev
+    $ sudo docker run --name mongodb-dev -e AUTH=true -e USERNAME=root -e PASSWORD=root -p :27017 -d mongodb:dev
