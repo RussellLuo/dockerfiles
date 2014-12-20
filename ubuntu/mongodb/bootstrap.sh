@@ -10,14 +10,37 @@ PASSWORD=${PASSWORD:=root}
 
 SUPERVISOR_CONF_D=/etc/supervisor/conf.d
 INIT_SCRIPT=/tmp/init.js
+KEYFILE_PATH=/tmp/mongodb-keyfile
 IPADDR=$(dirname $(ip -f inet -o addr show eth0|awk '{print $4}'))
 
+ensure_run_begin() {
+    file=$1
+    wait_time=$2
+    wait_time=${wait_time:-5000}
+    echo "var err = null;" >> ${file}
+    echo "do {" >> ${file}
+    echo "    sleep(${wait_time});" >> ${file}
+    echo "    try {" >> ${file}
+}
+
+ensure_run_end() {
+    file=$1
+    echo "    } catch(error) {" >> ${file}
+    echo "        err = error;" >> ${file}
+    echo "    }" >> ${file}
+    echo "} while(err !== null);" >> ${file}
+}
+
 if [ "${AUTH}" != "false" ]; then
-    AUTHCONF="--auth"
+    openssl rand -base64 741 > ${KEYFILE_PATH}
+    chmod 600 ${KEYFILE_PATH}
+    chown mongodb:mongodb ${KEYFILE_PATH}
+    KEYFILE="--keyFile ${KEYFILE_PATH}"
 else
-    AUTHCONF=
+    KEYFILE=
 fi
 
+ensure_run_begin ${INIT_SCRIPT}
 echo "rs.initiate({_id: \"${REPLSETNAME}\", members: [" >> ${INIT_SCRIPT}
 
 for i in $(seq "${REPLSETMEMBERS}"); do
@@ -30,7 +53,7 @@ for i in $(seq "${REPLSETMEMBERS}"); do
     cat > "${SUPERVISOR_CONF_D}/mongodb-${i}.conf" <<EOF
 [program:mongodb-${i}]
 user = mongodb
-command = /usr/bin/mongod --config /etc/mongodb.conf --replSet '${REPLSETNAME}' --port '${PORT}' --dbpath '${DBPATH}' ${AUTHCONF}
+command = /usr/bin/mongod --config /etc/mongodb.conf --replSet '${REPLSETNAME}' --port '${PORT}' --dbpath '${DBPATH}' ${KEYFILE}
 autorestart = true
 EOF
 
@@ -38,14 +61,16 @@ EOF
 done
 
 echo "]});" >> ${INIT_SCRIPT}
+ensure_run_end ${INIT_SCRIPT}
 
 if [ "${AUTH}" != "false" ]; then
     # add an administrator
     echo "" >> ${INIT_SCRIPT}
-    echo "sleep(10000);" >> ${INIT_SCRIPT}
-    echo "" >> ${INIT_SCRIPT}
     echo "use admin" >> ${INIT_SCRIPT}
+    echo "" >> ${INIT_SCRIPT}
+    ensure_run_begin ${INIT_SCRIPT}
     echo "db.addUser(\"${USERNAME}\", \"${PASSWORD}\");" >> ${INIT_SCRIPT}
+    ensure_run_end ${INIT_SCRIPT}
     echo "" >> ${INIT_SCRIPT}
     echo "exit" >> ${INIT_SCRIPT}
 fi
