@@ -13,13 +13,15 @@ INIT_SCRIPT=/tmp/init.js
 KEYFILE_PATH=/tmp/mongodb-keyfile
 IPADDR=$(dirname $(ip -f inet -o addr show eth0|awk '{print $4}'))
 
+
 ensure_run_begin() {
     file=$1
     wait_time=$2
     wait_time=${wait_time:-5000}
-    echo "var err = null;" >> ${file}
+    echo "var err;" >> ${file}
     echo "do {" >> ${file}
     echo "    sleep(${wait_time});" >> ${file}
+    echo "    err = null;" >> ${file}
     echo "    try {" >> ${file}
 }
 
@@ -31,6 +33,8 @@ ensure_run_end() {
     echo "} while(err !== null);" >> ${file}
 }
 
+
+# use keyFile option if AUTH is enabled
 if [ "${AUTH}" != "false" ]; then
     openssl rand -base64 741 > ${KEYFILE_PATH}
     chmod 600 ${KEYFILE_PATH}
@@ -40,6 +44,8 @@ else
     KEYFILE=
 fi
 
+
+# generate the initialization script for mongodb
 ensure_run_begin ${INIT_SCRIPT}
 echo "rs.initiate({_id: \"${REPLSETNAME}\", members: [" >> ${INIT_SCRIPT}
 
@@ -50,6 +56,7 @@ for i in $(seq "${REPLSETMEMBERS}"); do
     mkdir -p ${DBPATH}
     chown mongodb ${DBPATH}
 
+    # generate supervisor configuration files for running mongod
     cat > "${SUPERVISOR_CONF_D}/mongodb-${i}.conf" <<EOF
 [program:mongodb-${i}]
 user = mongodb
@@ -63,8 +70,9 @@ done
 echo "]});" >> ${INIT_SCRIPT}
 ensure_run_end ${INIT_SCRIPT}
 
+
+# add an administrator account if AUTH is enabled
 if [ "${AUTH}" != "false" ]; then
-    # add an administrator
     echo "" >> ${INIT_SCRIPT}
     echo "use admin" >> ${INIT_SCRIPT}
     echo "" >> ${INIT_SCRIPT}
@@ -75,4 +83,6 @@ if [ "${AUTH}" != "false" ]; then
     echo "exit" >> ${INIT_SCRIPT}
 fi
 
+
+# start supervisord
 /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
