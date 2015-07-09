@@ -31,6 +31,7 @@ sudo apt-get -y install python-virtualenv
 sudo pip install flake8
 
 # Install vim (and k-vim)
+sudo apt-get -y install ctags
 sudo apt-get -y install vim
 git clone https://github.com/RussellLuo/k-vim.git
 cd k-vim && sh -x install.sh && cd -
