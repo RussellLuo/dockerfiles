@@ -1,19 +1,24 @@
 ## Usage
 
 
-### 1. Build the image
+### 1. Set your SSH keys
+
+    $ cat ~/.ssh/id_rsa > .ssh/id_rsa
+    $ cat ~/.ssh/id_rsa.pub > .ssh/id_rsa.pub
+
+### 2. Build the image
 
     $ make build
 
-### 2. Run the container
+### 3. Run the container
 
     $ make run
 
-### 3. Bind IP (172.17.0.1) to the container
+### 4. Bind IP (172.17.0.1) to the container
 
     $ make bindip
 
-### 4. Login to the container and Install development requirements
+### 5. Login to the container and Install development requirements
 
     $ ssh root@172.17.0.1
     root@ea9de85ab6dd:~# ./install.sh
